@@ -278,13 +278,13 @@ canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();document.getEl
 canvas.addEventListener('webglcontextrestored',()=>{document.getElementById('err').style.display='none';rebuild();});
 const scene=new THREE.Scene(); scene.background=new THREE.Color(0x0d1310);
 const cam=new THREE.PerspectiveCamera(45,1,1,8000);
-const ctl=new THREE.OrbitControls(cam,canvas); ctl.enableDamping=true; ctl.dampingFactor=0.12; ctl.maxPolarAngle=Math.PI*0.49;
+const ctl=new THREE.OrbitControls(cam,canvas); ctl.enableDamping=true; ctl.dampingFactor=0.12; ctl.maxPolarAngle=Math.PI*0.49;ctl.minDistance=10;ctl.maxDistance=700;
 ctl.mouseButtons={LEFT:THREE.MOUSE.ROTATE,MIDDLE:THREE.MOUSE.PAN,RIGHT:THREE.MOUSE.PAN};
 ctl.touches={ONE:THREE.TOUCH.ROTATE,TWO:THREE.TOUCH.DOLLY_PAN};
 ctl.screenSpacePanning=false; ctl.enableZoom=matchMedia('(pointer:coarse)').matches; ctl.rotateSpeed=0.6; ctl.panSpeed=1;
 /* zoom pela roda na direção do cursor */
 function hitUnder(cx_,cy_){const r=canvas.getBoundingClientRect();const v=new THREE.Vector2((cx_-r.left)/r.width*2-1,-(cy_-r.top)/r.height*2+1);ray.setFromCamera(v,cam);let objs=inner&&inner.visible?[terrain,proxy]:[terrain];if(!objs.length)objs=[terrain];const h=ray.intersectObjects(objs)[0];return h?h.point:null;}
-canvas.addEventListener('wheel',e=>{e.preventDefault();if(anim)anim.user=true;const p=hitUnder(e.clientX,e.clientY)||ctl.target.clone();const k=Math.pow(1.0015,e.deltaY);const dc=cam.position.clone().sub(p).multiplyScalar(k);const dist=dc.length();if(dist<8||dist>3500)return;const dt=ctl.target.clone().sub(p).multiplyScalar(k);cam.position.copy(p).add(dc);ctl.target.copy(p).add(dt);},{passive:false});
+canvas.addEventListener('wheel',e=>{e.preventDefault();if(anim)anim.user=true;const p=hitUnder(e.clientX,e.clientY)||ctl.target.clone();const k=Math.pow(1.001,Math.max(-120,Math.min(120,e.deltaY)));const dc=cam.position.clone().sub(p).multiplyScalar(k);const dt=ctl.target.clone().sub(p).multiplyScalar(k);const nd=cam.position.clone().sub(ctl.target).multiplyScalar(k).length();if(nd<10||nd>700)return;cam.position.copy(p).add(dc);ctl.target.copy(p).add(dt);prenderAlvo();},{passive:false});
 /* duplo clique: o ponto vira o centro do giro */
 canvas.addEventListener('dblclick',e=>{const p=hitUnder(e.clientX,e.clientY);if(!p)return;const off=p.clone().sub(ctl.target);ctl.target.add(off);cam.position.add(off);});
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
@@ -413,6 +413,9 @@ canvas.addEventListener('pointerdown',e=>{downAt=[e.clientX,e.clientY];});
 canvas.addEventListener('pointerup',e=>{if(!downAt)return;const d=Math.hypot(e.clientX-downAt[0],e.clientY-downAt[1]);downAt=null;if(d>6)return;if(groups.fot&&groups.fot.visible){const r=canvas.getBoundingClientRect();ray.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),cam);const hf=ray.intersectObjects(groups.fot.children,true).find(x=>x.object.userData.foto!=null);if(hf){showFoto(hf.object.userData.foto);return;}}const p=pick(e);if(!p)return;onPick(p);});
 const E=p=>fmt(p[0]+E0,3), N=p=>fmt(p[1]+N0,3);
 let toastT=null;
+function prenderAlvo(){const b=D.rel.in.bb;const x=ctl.target.x+cx,y=-ctl.target.z+cy;const xc=Math.min(b[2],Math.max(b[0],x)),yc=Math.min(b[3],Math.max(b[1],y));if(xc!==x||yc!==y){const dxw=xc-x,dzw=-(yc-y);ctl.target.x+=dxw;ctl.target.z+=dzw;cam.position.x+=dxw;cam.position.z+=dzw;}
+  const h=gridH(xc,yc);if(h!=null){const ty=(h-ZB)*EX;const dy=ty-ctl.target.y;if(Math.abs(dy)>0.5){ctl.target.y+=dy;cam.position.y+=dy;}}}
+ctl.addEventListener('change',()=>{if(!anim)prenderAlvo();});
 let _ac=null,somOn=true;const SOM_ON='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>',SOM_OFF='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
 document.getElementById('buz').onclick=()=>{somOn=!somOn;const b=document.getElementById('buz');b.innerHTML=somOn?SOM_ON:SOM_OFF;b.setAttribute('aria-pressed',String(somOn));b.setAttribute('aria-label',somOn?'Som ligado':'Som desligado');b.title=somOn?'Som ligado':'Som desligado';};
 function somPronto(){try{_ac=_ac||new (window.AudioContext||window.webkitAudioContext)();if(_ac.state==='suspended')_ac.resume();}catch(e){}}
