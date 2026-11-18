@@ -207,7 +207,7 @@ details.aba>.corpo{padding:2px 12px 12px;display:flex;flex-direction:column;gap:
       <div class="layers">
         <label><input type="checkbox" id="l-sup" checked> Superfície</label>
         <label><input type="checkbox" id="l-orto" checked> Ortofoto</label>
-        <label><input type="checkbox" id="l-cur" checked><i class="sw" style="background:#ff7a00"></i> Curvas de 1 m</label>
+        <label><input type="checkbox" id="l-cur" checked><i class="sw" style="background:#8a5a14"></i> Curvas (0,5 m)</label>
         <label><input type="checkbox" id="l-pla" checked><i class="sw" style="background:var(--plant)"></i> Plantio</label>
         <label><input type="checkbox" id="l-eix" checked><i class="sw" style="background:#ff5a1f"></i> Estrada e tubo</label>
         <label><input type="checkbox" id="l-cer" checked><i class="sw" style="background:#c9c9c9"></i> Cerca</label>
@@ -329,7 +329,11 @@ let selP=0;
 function buildLayers(){
   for(const k in groups){scene.remove(groups[k]);groups[k].traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material&&o.material!==window._keepMat)o.material.dispose&&o.material.dispose();});delete groups[k];}
   const L=D.lay;
-  const gc=grp('cur'); for(const c of L.curvas){const P=c.xy.map(p=>[p[0],p[1],c.z]);gc.add(lineFrom(P,c.maj?0xff7a00:0xffe14d));gc.add(band(P,c.maj?0.3:0.12,c.maj?0xff7a00:0xffe14d,c.maj?1:0.85,0.12));}
+  const gc=grp('cur'); window._cotTex=window._cotTex||{};
+  for(const c of L.curvas){const P=c.xy.map(p=>[p[0],p[1],c.z]);const cor=c.maj?0x8a5a14:0xff8c1a;gc.add(lineFrom(P,cor));gc.add(band(P,c.maj?0.32:0.12,cor,c.maj?1:0.9,0.12));
+    if(c.maj){const txt=fmt(c.z,1).replace(',0','');let tx=window._cotTex[txt];if(!tx){const cv=document.createElement('canvas');cv.width=128;cv.height=52;const x=cv.getContext('2d');x.font='800 38px Asap,sans-serif';x.textAlign='center';x.textBaseline='middle';x.lineWidth=9;x.strokeStyle='rgba(255,255,255,.95)';x.strokeText(txt,64,27);x.fillStyle='#5a3608';x.fillText(txt,64,27);tx=new THREE.CanvasTexture(cv);window._cotTex[txt]=tx;}
+      const mat=new THREE.SpriteMaterial({map:tx,sizeAttenuation:false,depthTest:true,transparent:true});let acc=0,next=20;
+      for(let k=1;k<c.xy.length;k++){const a=c.xy[k-1],b=c.xy[k];acc+=Math.hypot(b[0]-a[0],b[1]-a[1]);if(acc>=next){const s=new THREE.Sprite(mat);s.scale.set(0.075,0.031,1);s.position.copy(toW(b[0],b[1],c.z+0.6));s.renderOrder=4;gc.add(s);next+=60;}}}}
   grp('pla').add(lineFrom(L.plantio.line,0x8fd14f)); grp('pla').add(ribbon(L.plantio.line,2.2,0x8fd14f,0.45));
   const ge=grp('eix'); for(const e of L.eixos){if(e.nome.startsWith('Eixo'))continue;const tubo=e.nome.startsWith('Tubo');ge.add(band(e.line,tubo?1.6:4,tubo?0x1e88ff:0xff5a1f,0.55,tubo?0.35:0.3));}
   const gr=grp('cer'); for(const c of L.cerca){gr.add(lineFrom(c,0xffffff,1,0.9));gr.add(ribbon(c,1.4,0xffffff,0.5));}
@@ -492,7 +496,8 @@ function planta(){
   let x0=Math.min(...all.map(p=>p[0])),x1=Math.max(...all.map(p=>p[0])),y0=Math.min(...all.map(p=>p[1])),y1=Math.max(...all.map(p=>p[1]));
   const s=280/Math.max(x1-x0,y1-y0),ox=150-(x0+x1)/2*s,oy=150+(y0+y1)/2*s;window._pl={s,ox,oy};const P=p=>(ox+p[0]*s).toFixed(1)+','+(oy-p[1]*s).toFixed(1);
   const ink=css('--ink'),mut=css('--muted'),plant=css('--plant'),water=css('--water');let h='';
-  for(const c of D.lay.curvas)if(c.maj)h+=`<polyline points="${c.xy.map(P).join(' ')}" fill="none" stroke="${mut}" stroke-opacity=".35" stroke-width=".6"/>`;
+  for(const c of D.lay.curvas){h+=`<polyline points="${c.xy.map(P).join(' ')}" fill="none" stroke="${c.maj?'#8a5a14':'#ff8c1a'}" stroke-opacity="${c.maj?.9:.55}" stroke-width="${c.maj?.9:.45}"/>`;
+    if(c.maj){const q=c.xy[Math.floor(c.xy.length/2)];h+=`<text x="${(ox+q[0]*s).toFixed(1)}" y="${(oy-q[1]*s).toFixed(1)}" font-size="5.5" font-weight="700" fill="#6b4410" stroke="#fff" stroke-width="1.6" paint-order="stroke" text-anchor="middle">${fmt(c.z,1).replace(',0','')}</text>`;}}
   if(D.rio)h+=`<polyline points="${D.rio.map(P).join(' ')}" fill="none" stroke="#2f86e0" stroke-width="2.4" stroke-linecap="round"/>`;
   h+=`<polygon points="${D.lay.plantio.line.map(P).join(' ')}" fill="${plant}" fill-opacity=".22" stroke="${plant}" stroke-width="1.8"/>`;
   for(const c of D.lay.cerca)h+=`<polyline points="${c.map(P).join(' ')}" fill="none" stroke="${ink}" stroke-width="1" stroke-dasharray="3 2"/>`;
