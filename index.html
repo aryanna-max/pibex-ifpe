@@ -189,7 +189,7 @@ details.aba>.corpo{padding:2px 12px 12px;display:flex;flex-direction:column;gap:
 
     <details class="aba" open><summary>Planta e perfis (esquemáticos)</summary><div class="corpo">
     <section>
-      <div class="hint" style="margin:0 0 6px">Clique numa linha da planta ou escolha na lista.</div>
+      <div class="hint" style="margin:0 0 6px">Na ferramenta Ponto, clique numa linha para ver o perfil. Em Medir e Caminho, clique na planta para medir.</div>
       <svg id="planta" viewBox="0 0 300 300" style="width:100%;height:auto;max-height:260px;display:block;border:1px solid var(--line);border-radius:6px;background:var(--bg)" role="img" aria-label="Planta esquemática com limites, eixos e seções"></svg>
       <label for="selPerf" class="hint" style="display:block;margin:8px 0 4px">Perfil ou seção (clique também na planta)</label>
       <select id="selPerf" style="width:100%;padding:6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:13px var(--sans)"></select>
@@ -351,7 +351,7 @@ document.getElementById('l-cam').addEventListener('change',camVis);
 
 /* marcadores e etiquetas */
 const tagsEl=document.getElementById('tags'); let tags=[]; let tagsDirty=true;
-function setTags(){tags=[];
+function setTags(){drawPlOver();tags=[];
   if(document.getElementById('l-key').checked) for(const k of D.lay.chave) tags.push({p:[k[1],k[2],k[3]],t:k[0]+' · '+fmt(k[3])+' m'});
   if(mode==='medir'&&mp.length) mp.forEach((p,i)=>tags.push({p,t:(i?'B':'A')+' · '+fmt(p[2])+' m',c:'m'}));
   if(mode==='cam'&&cp.length){tags.push({p:cp[0],t:'Início · '+fmt(cp[0][2])+' m',c:'p'}); if(cp.length>1)tags.push({p:cp[cp.length-1],t:'Fim · '+fmt(cp[cp.length-1][2])+' m',c:'p'});}
@@ -364,7 +364,7 @@ function placeTags(){const r=canvas.getBoundingClientRect();[...tagsEl.children]
 let mode='ponto', pk=null, mp=[], cp=[], pathObj=null, measObj=null, mark=null;
 const modes={ponto:'Clique no terreno para ver a altitude ortométrica. Botão esquerdo gira, roda aproxima no cursor, roda apertada ou botão direito arrasta, duplo clique muda o centro do giro.',medir:'Clique em dois pontos do terreno. O terceiro clique começa uma nova medida.',cam:'Clique no terreno para pôr cada vértice. O caminho acompanha o relevo entre um clique e outro.'};
 function camVis(){const on=document.getElementById('l-cam').checked;if(pathObj)pathObj.visible=on&&mode==='cam';if(groups.sel)groups.sel.visible=on;}
-function setMode(k){mode=k;for(const b of ['ponto','medir','cam'])document.getElementById('m-'+b).setAttribute('aria-pressed',b===k);document.getElementById('p-ponto').hidden=k!=='ponto';document.getElementById('p-medir').hidden=k!=='medir';document.getElementById('p-cam').hidden=k!=='cam';document.getElementById('hint').textContent=modes[k];if(measObj)measObj.visible=k==='medir';if(pathObj)pathObj.visible=k==='cam'&&document.getElementById('l-cam').checked;if(mark)mark.visible=k==='ponto';tagsDirty=true;if(k==='cam')drawProfile();}
+function setMode(k){mode=k;for(const b of ['ponto','medir','cam'])document.getElementById('m-'+b).setAttribute('aria-pressed',b===k);document.getElementById('p-ponto').hidden=k!=='ponto';document.getElementById('p-medir').hidden=k!=='medir';document.getElementById('p-cam').hidden=k!=='cam';document.getElementById('hint').textContent=modes[k];if(measObj)measObj.visible=k==='medir';if(pathObj)pathObj.visible=k==='cam'&&document.getElementById('l-cam').checked;if(mark)mark.visible=k==='ponto';tagsDirty=true;if(k==='cam')drawProfile();drawPlOver();}
 document.getElementById('m-ponto').onclick=()=>setMode('ponto');document.getElementById('m-medir').onclick=()=>setMode('medir');document.getElementById('m-cam').onclick=()=>setMode('cam');
 
 function pick(ev){const r=canvas.getBoundingClientRect();const v=new THREE.Vector2((ev.clientX-r.left)/r.width*2-1,-(ev.clientY-r.top)/r.height*2+1);ray.setFromCamera(v,cam);const h=ray.intersectObject(terrain)[0];if(!h){if(ray.intersectObjects([proxy]).length)fora();return null;}const x=h.point.x+cx,y=-h.point.z+cy;return [x,y,h.point.y/EX+ZB];}
@@ -475,7 +475,7 @@ D.perfis.forEach((p,i)=>{const o=document.createElement('option');o.value=i;o.te
 function planta(){
   const sv=document.getElementById('planta');const all=[...D.lay.plantio.line,...D.perfis.flatMap(p=>p.xy)];
   let x0=Math.min(...all.map(p=>p[0])),x1=Math.max(...all.map(p=>p[0])),y0=Math.min(...all.map(p=>p[1])),y1=Math.max(...all.map(p=>p[1]));
-  const s=280/Math.max(x1-x0,y1-y0),ox=150-(x0+x1)/2*s,oy=150+(y0+y1)/2*s;const P=p=>(ox+p[0]*s).toFixed(1)+','+(oy-p[1]*s).toFixed(1);
+  const s=280/Math.max(x1-x0,y1-y0),ox=150-(x0+x1)/2*s,oy=150+(y0+y1)/2*s;window._pl={s,ox,oy};const P=p=>(ox+p[0]*s).toFixed(1)+','+(oy-p[1]*s).toFixed(1);
   const ink=css('--ink'),mut=css('--muted'),plant=css('--plant'),water=css('--water');let h='';
   for(const c of D.lay.curvas)if(c.maj)h+=`<polyline points="${c.xy.map(P).join(' ')}" fill="none" stroke="${mut}" stroke-opacity=".35" stroke-width=".6"/>`;
   h+=`<polygon points="${D.lay.plantio.line.map(P).join(' ')}" fill="${plant}" fill-opacity=".22" stroke="${plant}" stroke-width="1.8"/>`;
@@ -484,19 +484,24 @@ function planta(){
   const k=D.lay.chave;h+=`<circle cx="${ox+k[0][1]*s}" cy="${oy-k[0][2]*s}" r="3.5" fill="${water}"/><text x="${ox+k[0][1]*s-6}" y="${oy-k[0][2]*s-6}" font-size="9" fill="${ink}" text-anchor="end">rio</text>`;
   h+=`<circle cx="${ox+k[2][1]*s}" cy="${oy-k[2][2]*s}" r="3.5" fill="#e0453a"/>`;
   const bar=50*s;h+=`<line x1="12" y1="290" x2="${12+bar}" y2="290" stroke="${ink}" stroke-width="2"/><text x="12" y="284" font-size="9" fill="${ink}">50 m</text><text x="285" y="16" font-size="11" fill="${ink}" text-anchor="middle" font-weight="600">N</text><path d="M285 20 l-4 10 h8z" fill="${ink}"/>`;
-  sv.innerHTML=h;sv.querySelectorAll('[data-i]').forEach(el=>el.addEventListener('click',()=>selPerf(+el.dataset.i,true)));
+  sv.innerHTML=h+'<g id="plOver"></g>';sv.querySelectorAll('[data-i]').forEach(el=>el.addEventListener('click',ev=>{if(mode==='ponto'){ev.stopPropagation();selPerf(+el.dataset.i,true);}}));
+  if(!sv._clk){sv._clk=1;sv.style.cursor='crosshair';sv.addEventListener('click',ev=>{const pt=sv.createSVGPoint();pt.x=ev.clientX;pt.y=ev.clientY;const v=pt.matrixTransform(sv.getScreenCTM().inverse());const L=window._pl;const x=(v.x-L.ox)/L.s,y=(L.oy-v.y)/L.s;const h=hAt(x,y);if(h==null){fora();return;}onPick([x,y,h]);});}
+  drawPlOver();
 }
+function fitCanvas(c){const r=c.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2),W=Math.max(200,r.width),H=Math.max(90,r.height);c.width=Math.round(W*d);c.height=Math.round(H*d);const x=c.getContext('2d');x.setTransform(d,0,0,d,0,0);x.clearRect(0,0,W,H);return [x,W,H];}
+addEventListener('resize',()=>{try{drawPerf();drawProfile();}catch(e){}});
+document.addEventListener('toggle',()=>{try{drawPerf();drawProfile();}catch(e){}},true);
 function drawPerf(){
-  const P=D.perfis[selP],pts=P.pts,c=document.getElementById('perf2'),x=c.getContext('2d'),W=c.width,H=c.height;x.clearRect(0,0,W,H);
+  const P=D.perfis[selP],pts=P.pts,c=document.getElementById('perf2'),[x,W,H]=fitCanvas(c);
   if(pts.length<2)return;const L0=pts[0][0],L=pts[pts.length-1][0]-L0;let lo=Math.min(...pts.map(p=>p[1])),hi=Math.max(...pts.map(p=>p[1]));
   const span=Math.max(hi-lo,4);lo=Math.floor(lo-span*.15);hi=Math.ceil(hi+span*.15);
-  const pl=70,pr=16,pt=16,pb=40,sx=v=>pl+(v-L0)/L*(W-pl-pr),sy=v=>H-pb-(v-lo)/(hi-lo)*(H-pt-pb);
-  x.font='22px "Asap",sans-serif';x.fillStyle=css('--muted');x.strokeStyle=css('--line');x.lineWidth=1;
-  const step=(hi-lo)>24?5:((hi-lo)>10?2:1);for(let v=Math.ceil(lo/step)*step;v<=hi;v+=step){x.beginPath();x.moveTo(pl,sy(v));x.lineTo(W-pr,sy(v));x.stroke();x.fillText(v+' m',6,sy(v)+7);}
-  x.fillText('0',pl-4,H-10);x.textAlign='right';x.fillText(fmt(L,0)+' m',W-pr,H-10);x.textAlign='left';
-  const ex=((H-pt-pb)/(hi-lo))/((W-pl-pr)/L);x.fillText('escala vertical '+fmt(ex,0)+'× a horizontal',pl+8,pt+18);
+  const pl=40,pr=8,pt=8,pb=20,sx=v=>pl+(v-L0)/L*(W-pl-pr),sy=v=>H-pb-(v-lo)/(hi-lo)*(H-pt-pb);
+  x.font='11.5px "Asap",sans-serif';x.fillStyle=css('--muted');x.strokeStyle=css('--line');x.lineWidth=1;
+  const step=(hi-lo)>24?5:((hi-lo)>10?2:1);for(let v=Math.ceil(lo/step)*step;v<=hi;v+=step){x.beginPath();x.moveTo(pl,sy(v));x.lineTo(W-pr,sy(v));x.stroke();x.fillText(v+' m',2,sy(v)+4);}
+  x.fillText('0',pl-4,H-6);x.textAlign='right';x.fillText(fmt(L,0)+' m',W-pr,H-6);x.textAlign='left';
+  const ex=((H-pt-pb)/(hi-lo))/((W-pl-pr)/L);x.fillText('escala vertical '+fmt(ex,0)+'× a horizontal',pl+6,pt+10);
   x.beginPath();x.moveTo(sx(pts[0][0]),H-pb);pts.forEach(p=>x.lineTo(sx(p[0]),sy(p[1])));x.lineTo(sx(pts[pts.length-1][0]),H-pb);x.closePath();x.globalAlpha=.2;x.fillStyle=css('--teal');x.fill();x.globalAlpha=1;
-  x.beginPath();pts.forEach((p,i)=>i?x.lineTo(sx(p[0]),sy(p[1])):x.moveTo(sx(p[0]),sy(p[1])));x.strokeStyle=css('--accent');x.lineWidth=3;x.stroke();
+  x.beginPath();pts.forEach((p,i)=>i?x.lineTo(sx(p[0]),sy(p[1])):x.moveTo(sx(p[0]),sy(p[1])));x.strokeStyle=css('--accent');x.lineWidth=2;x.stroke();
   document.getElementById('pf-l').textContent=m(L);document.getElementById('pf-h').textContent=fmt(pts[0][1])+' / '+fmt(pts[pts.length-1][1])+' m';
   document.getElementById('pf-mm').textContent=fmt(Math.min(...pts.map(p=>p[1])))+' / '+fmt(Math.max(...pts.map(p=>p[1])))+' m';
 }
@@ -505,6 +510,12 @@ function flyToPerf(i){const P=D.perfis[i];const xy=P.xy;let cxp=0,cyp=0;xy.forEa
   const a=xy[0],b=xy[xy.length-1];const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.max(30,Math.hypot(dx,dy));const ux=dx/(Math.hypot(dx,dy)||1),uy=dy/(Math.hypot(dx,dy)||1);
   const h=hSurf(cxp,cyp)??90;const tg=toW(cxp,cyp,h);const d=L*0.9+25;const cp_=toW(cxp-uy*d,cyp+ux*d,h);cp_.y=tg.y+d*0.55;
   if(anim)stopAnim();fly={t0:performance.now(),p0:cam.position.clone(),t1:ctl.target.clone(),p1:cp_,tt:tg};}
+function drawPlOver(){const g=document.getElementById('plOver');if(!g||!window._pl)return;const L=window._pl,X=p=>(L.ox+p[0]*L.s).toFixed(1),Y=p=>(L.oy-p[1]*L.s).toFixed(1);let h='';
+  if(mode==='cam'&&cp.length){h+=`<polyline points="${cp.map(p=>X(p)+','+Y(p)).join(' ')}" fill="none" stroke="#ff2d8a" stroke-width="2.2"/>`;cp.forEach(p=>h+=`<circle cx="${X(p)}" cy="${Y(p)}" r="2.2" fill="#ff2d8a"/>`);}
+  if(mode==='medir'&&mp.length){if(mp.length>1)h+=`<line x1="${X(mp[0])}" y1="${Y(mp[0])}" x2="${X(mp[1])}" y2="${Y(mp[1])}" stroke="#7a3fb0" stroke-width="2"/>`;mp.forEach((p,i)=>h+=`<circle cx="${X(p)}" cy="${Y(p)}" r="3" fill="#7a3fb0"/><text x="${+X(p)+4}" y="${+Y(p)-4}" font-size="9" font-weight="700" fill="#7a3fb0">${i?'B':'A'}</text>`);
+    if(mp.length>1){const dh=Math.hypot(mp[1][0]-mp[0][0],mp[1][1]-mp[0][1]);h+=`<text x="${(+X(mp[0])+ +X(mp[1]))/2+4}" y="${(+Y(mp[0])+ +Y(mp[1]))/2-4}" font-size="9" font-weight="700" fill="#7a3fb0">${fmt(dh,1)} m</text>`;}}
+  if(mode==='ponto'&&pk)h+=`<circle cx="${X(pk)}" cy="${Y(pk)}" r="2.6" fill="#111" stroke="#fff" stroke-width="1"/>`;
+  g.innerHTML=h;}
 function selPerf(i,voar){selP=i;selEl.value=i;planta();drawPerf();buildLayers();camVis();if(voar)flyToPerf(i);}
 selEl.addEventListener('change',()=>selPerf(+selEl.value,true));
 document.getElementById('bPlay').onclick=()=>{if(anim)stopAnim();else startArrival();};
@@ -514,7 +525,7 @@ function onPick(p){
   if(mode==='ponto'){pk=p;document.getElementById('r-h').textContent=fmt(p[2])+' m';document.getElementById('r-e').textContent=E(p);document.getElementById('r-n').textContent=N(p);document.getElementById('r-rio').textContent=fmt(p[2]-rioH)+' m';drawMark();}
   if(mode==='medir'){if(mp.length>=2)mp=[];mp.push(p);updMeasure();}
   if(mode==='cam'){const l=cp[cp.length-1];if(l&&Math.hypot(l[0]-p[0],l[1]-p[1])<0.5)return;cp.push(p);updPath();}
-  tagsDirty=true;
+  tagsDirty=true;drawPlOver();
 }
 function drawMark(){if(mark)scene.remove(mark);if(!pk)return;mark=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,8),new THREE.MeshBasicMaterial({color:0x111111}));mark.position.copy(toW(pk[0],pk[1],pk[2]));scene.add(mark);}
 function updMeasure(){
@@ -555,16 +566,16 @@ function updPath(){
 }
 function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
 function drawProfile(){
-  const c=document.getElementById('prof'),x=c.getContext('2d');const W=c.width,H=c.height;x.clearRect(0,0,W,H);
-  x.font='22px "IBM Plex Sans",sans-serif';x.fillStyle=css('--muted');
-  if(prof.length<2){x.fillText('O perfil aparece com dois vértices ou mais.',20,H/2);return;}
+  const c=document.getElementById('prof');const [x,W,H]=fitCanvas(c);
+  x.font='11.5px "Asap",sans-serif';x.fillStyle=css('--muted');
+  if(prof.length<2){x.fillText('O perfil aparece com dois vértices ou mais.',10,H/2);return;}
   const L=prof[prof.length-1][0];let lo=Math.min(...prof.map(p=>p[1])),hi=Math.max(...prof.map(p=>p[1]));lo=Math.floor(lo-1);hi=Math.ceil(hi+1);
-  const pl=70,pr=16,pt=16,pb=40,sx=v=>pl+v/L*(W-pl-pr),sy=v=>H-pb-(v-lo)/(hi-lo)*(H-pt-pb);
+  const pl=40,pr=8,pt=8,pb=20,sx=v=>pl+v/L*(W-pl-pr),sy=v=>H-pb-(v-lo)/(hi-lo)*(H-pt-pb);
   x.strokeStyle=css('--line');x.lineWidth=1;const step=(hi-lo)>20?5:2;
-  for(let v=Math.ceil(lo/step)*step;v<=hi;v+=step){x.beginPath();x.moveTo(pl,sy(v));x.lineTo(W-pr,sy(v));x.stroke();x.fillText(v+' m',6,sy(v)+7);}
-  x.fillText('0',pl-4,H-10);x.textAlign='right';x.fillText(fmt(L,0)+' m',W-pr,H-10);x.textAlign='left';
+  for(let v=Math.ceil(lo/step)*step;v<=hi;v+=step){x.beginPath();x.moveTo(pl,sy(v));x.lineTo(W-pr,sy(v));x.stroke();x.fillText(v+' m',2,sy(v)+4);}
+  x.fillText('0',pl-4,H-6);x.textAlign='right';x.fillText(fmt(L,0)+' m',W-pr,H-6);x.textAlign='left';
   x.beginPath();x.moveTo(sx(0),H-pb);prof.forEach(p=>x.lineTo(sx(p[0]),sy(p[1])));x.lineTo(sx(L),H-pb);x.closePath();x.globalAlpha=.18;x.fillStyle=css('--path');x.fill();x.globalAlpha=1;
-  x.beginPath();prof.forEach((p,i)=>i?x.lineTo(sx(p[0]),sy(p[1])):x.moveTo(sx(p[0]),sy(p[1])));x.strokeStyle=css('--path');x.lineWidth=3;x.stroke();
+  x.beginPath();prof.forEach((p,i)=>i?x.lineTo(sx(p[0]),sy(p[1])):x.moveTo(sx(p[0]),sy(p[1])));x.strokeStyle=css('--path');x.lineWidth=2;x.stroke();
 }
 document.getElementById('c-und').onclick=()=>{cp.pop();updPath();};
 document.getElementById('c-clr').onclick=()=>{cp=[];updPath();};
