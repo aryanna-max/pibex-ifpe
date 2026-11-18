@@ -667,7 +667,7 @@ new ResizeObserver(resize).observe(canvas.parentElement);
 rebuild(); cam.position.set(-260,420,520); ctl.target.set(0,(90-ZB)*EX,0); ctl.update(); resize();
 cSel.value='0'; loadPronto(0); setMode('ponto'); selPerf(0);
 startArrival();{anim.f(0);anim=null;car.visible=true;setCap(null);document.getElementById('bPlay').textContent='Ver a chegada ao terreno';}
-document.getElementById('bInicio').onclick=()=>{somPronto();const ini=document.getElementById('inicio');ini.hidden=true;ini.style.display='none';startArrival();};
+document.getElementById('bInicio').addEventListener('pointerdown',e=>e.stopPropagation());document.getElementById('bInicio').onclick=(e)=>{e.stopPropagation();downAt=null;somPronto();const ini=document.getElementById('inicio');ini.hidden=true;ini.style.display='none';startArrival();};
 const nA=document.getElementById('nArrow');
 (function loop(){requestAnimationFrame(loop);if(window._rioTex)window._rioTex.offset.x+=0.004;if(fly){const a=sm(0,1.6,(performance.now()-fly.t0)/1000);cam.position.lerpVectors(fly.p0,fly.p1,a);ctl.target.lerpVectors(fly.t1,fly.tt,a);if(a>=1)fly=null;}if(anim){const now=performance.now();window._dt=Math.min(0.5,(now-(anim.last||now))/1000);anim.last=now;anim.focus=null;anim.f((now-anim.t0)/1000);if(anim&&anim.user){if(anim.focus){const dlt=anim.focus.clone().sub(ctl.target);cam.position.add(dlt);ctl.target.add(dlt);}ctl.update();}else if(anim)cam.lookAt(ctl.target);}else ctl.update();renderer.render(scene,cam);if(tagsDirty)setTags();placeTags();const az=Math.atan2(cam.position.x-ctl.target.x,cam.position.z-ctl.target.z);nA.style.transform='rotate('+(az*180/Math.PI)+'deg)';})();
 </script>
