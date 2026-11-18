@@ -50,7 +50,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .layers{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:13px}
 .layers label{display:flex;align-items:center;gap:6px;cursor:pointer}
 .sw{width:10px;height:10px;border-radius:2px;display:inline-block;flex:none}
-#prof{width:100%;height:150px;display:block;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
+#prof{width:100%;height:auto;aspect-ratio:900/380;display:block;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
 .foot{font-size:11.5px;color:var(--muted);line-height:1.5;border-top:1px solid var(--line);padding-top:12px;margin-top:auto}
 .tags{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .tag{position:absolute;transform:translate(-50%,-130%);background:rgba(16,22,19,.82);color:#f1f4ef;font:500 11.5px var(--sans);padding:3px 7px;border-radius:4px;white-space:nowrap}
@@ -74,6 +74,21 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .ajuda-btn{position:absolute;right:calc(max(10px,env(safe-area-inset-right,0px)) + 48px);top:12px;border:0;border-radius:6px;background:rgba(16,22,19,.82);color:#fff;font:600 12.5px var(--sans);padding:8px 12px;cursor:pointer}
 .ajuda{position:absolute;right:max(10px,env(safe-area-inset-right,0px));top:56px;width:min(420px,calc(100% - 20px));max-height:calc(100% - 120px);overflow:auto;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-top:4px solid var(--teal);border-radius:8px;padding:12px 16px;z-index:4;font-size:13px;line-height:1.5}
 .ajuda-top{display:flex;justify-content:space-between;align-items:center;font-size:15px;color:var(--accent)}.ajuda ol{padding-left:18px;margin:8px 0;display:flex;flex-direction:column;gap:6px}.ajuda b{color:var(--accent)}.ajuda-obs{font-size:12px;color:var(--muted);margin:6px 0 0}
+details.aba{border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+details.aba>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;padding:10px 12px;font:600 13.5px var(--sans);color:var(--accent);border-radius:8px}
+details.aba>summary::-webkit-details-marker{display:none}
+details.aba>summary::after{content:'';width:8px;height:8px;border-right:2px solid var(--accent);border-bottom:2px solid var(--accent);transform:rotate(45deg);margin-right:4px;transition:transform .15s}
+details.aba:not([open])>summary::after{transform:rotate(-45deg)}
+details.aba>summary:hover{background:var(--bg)}
+details.aba>.corpo{padding:2px 12px 12px;display:flex;flex-direction:column;gap:10px}
+.foot.corpo{border-top:0!important;margin-top:0;padding-top:2px}
+.btn{border:1.5px solid var(--accent)!important;color:var(--accent)!important;font-weight:600!important;background:var(--panel)}
+.btn:hover{background:var(--accent)!important;color:var(--accent-ink)!important}
+.btn.pri{background:var(--accent)!important;color:var(--accent-ink)!important}
+#c-sel,#selPerf{border:1.5px solid var(--accent)!important;font-weight:600!important;cursor:pointer}
+.layers input{accent-color:var(--accent);width:16px;height:16px;cursor:pointer}
+.layers label{padding:4px 6px;border-radius:6px}.layers label:hover{background:var(--bg)}
+#planta polyline[data-i]:hover{stroke-width:4}
 #err{position:absolute;inset:0;display:none;place-items:center;color:#fff;padding:24px;text-align:center}
 @media (max-width:760px){.app{grid-template-columns:1fr;grid-template-rows:56vh auto auto;height:auto}.view{height:56vh}.side{border-left:0;border-top:1px solid var(--line);overflow:visible}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -114,16 +129,17 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       <div class="sub">Comunidade Padre Tiago, Moreno/PE. Projeto de extensão PIBEX-ET de captação e irrigação, IFPE e Comissão Pastoral da Terra.</div>
     </div>
 
-    <div>
-      <div class="lbl">Ferramenta</div>
+    <details class="aba" open>
+      <summary>Ferramenta</summary><div class="corpo">
       <div class="modes" role="group" aria-label="Ferramenta">
         <button id="m-ponto" aria-pressed="true">Ponto</button>
         <button id="m-medir" aria-pressed="false">Medir</button>
         <button id="m-cam" aria-pressed="false">Caminho</button>
       </div>
       <div class="hint" id="hint">Clique no terreno para ver a altitude ortométrica. Botão esquerdo gira, roda aproxima no cursor, roda apertada ou botão direito arrasta, duplo clique muda o centro do giro.</div>
-    </div>
+    </div></details>
 
+    <details class="aba" open><summary>Resultado</summary><div class="corpo">
     <section id="p-ponto">
       <div class="lbl">Ponto clicado</div>
       <div class="big" id="r-h">--</div>
@@ -160,7 +176,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
         <dt>Subida acumulada</dt><dd id="c-up">--</dd>
         <dt>Mais baixo / mais alto</dt><dd id="c-mm">--</dd>
       </dl>
-      <canvas id="prof" width="600" height="300" aria-label="Perfil do caminho"></canvas>
+      <canvas id="prof" width="900" height="380" aria-label="Perfil do caminho"></canvas>
       <div class="btns" style="margin-top:8px">
         <button class="btn pri" id="c-go">Percorrer o caminho</button>
         <button class="btn" id="c-und">Desfazer</button>
@@ -169,18 +185,20 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       </div>
       <div class="hint" id="c-msg">Clique no terreno para pôr cada vértice. O caminho acompanha o relevo entre um clique e outro.</div>
     </section>
+    </div></details>
 
+    <details class="aba" open><summary>Planta e perfis (esquemáticos)</summary><div class="corpo">
     <section>
-      <div class="lbl">Planta e perfis (esquemáticos)</div>
-      <svg id="planta" viewBox="0 0 300 300" style="width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:6px;background:var(--bg)" role="img" aria-label="Planta esquemática com limites, eixos e seções"></svg>
+      <div class="hint" style="margin:0 0 6px">Clique numa linha da planta ou escolha na lista.</div>
+      <svg id="planta" viewBox="0 0 300 300" style="width:100%;height:auto;max-height:260px;display:block;border:1px solid var(--line);border-radius:6px;background:var(--bg)" role="img" aria-label="Planta esquemática com limites, eixos e seções"></svg>
       <label for="selPerf" class="hint" style="display:block;margin:8px 0 4px">Perfil ou seção (clique também na planta)</label>
       <select id="selPerf" style="width:100%;padding:6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:13px var(--sans)"></select>
-      <canvas id="perf2" width="600" height="300" aria-label="Perfil esquemático" style="width:100%;height:150px;display:block;border:1px solid var(--line);border-radius:6px;background:var(--bg);margin-top:8px"></canvas>
+      <canvas id="perf2" width="900" height="380" aria-label="Perfil esquemático" style="width:100%;height:auto;aspect-ratio:900/380;display:block;border:1px solid var(--line);border-radius:6px;background:var(--bg);margin-top:8px"></canvas>
       <dl class="read" style="margin-top:6px"><dt>Comprimento</dt><dd id="pf-l">--</dd><dt>Início / fim</dt><dd id="pf-h">--</dd><dt>Mais baixo / mais alto</dt><dd id="pf-mm">--</dd></dl>
     </section>
+    </div></details>
 
-    <div>
-      <div class="lbl">Camadas</div>
+    <details class="aba"><summary>Camadas</summary><div class="corpo">
       <div class="layers">
         <label><input type="checkbox" id="l-sup" checked> Superfície</label>
         <label><input type="checkbox" id="l-orto" checked> Ortofoto</label>
@@ -193,21 +211,20 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
         <label><input type="checkbox" id="l-cam" checked><i class="sw" style="background:#ff2d8a"></i> Caminho e perfil</label>
         <label><input type="checkbox" id="l-fot" checked><i class="sw" style="background:#ffd23f"></i> Fotos de campo</label>
       </div>
-    </div>
+    </div></details>
 
-    <div>
-      <div class="lbl">Números do terreno</div>
+    <details class="aba" open><summary>Números do terreno</summary><div class="corpo">
       <dl class="read">
         <dt>Área de plantio</dt><dd id="k-area">--</dd>
         <dt>Linha d'água do rio</dt><dd id="k-rio">--</dd>
         <dt>Ponto mais alto do plantio</dt><dd id="k-hi">--</dd>
         <dt>Desnível rio ao ponto mais alto</dt><dd id="k-dz">--</dd>
       </dl>
-    </div>
+    </div></details>
 
-    <div class="foot">
+    <details class="aba"><summary>Sobre o levantamento</summary><div class="corpo foot">
       Levantamento topográfico planialtimétrico com GNSS (149 pontos) e drone, outubro de 2026, executado pela AG Topografia. Coordenadas UTM SIRGAS 2000, fuso 25 S. Altitude ortométrica pelo modelo hgeoHNOR (IBGE-PPP da base: 103,12 m). Todo o relevo vem do levantamento: GNSS e drone. Medidas só dentro da área levantada; no resto da ortofoto o relevo é estendido a partir desses pontos e não serve para medir.
-    </div>
+    </div></details>
   </aside>
   <footer class="aglab-bar">
     <div class="aglab-card"><div class="mark">AG</div><div><div class="name">AGLab</div><div class="sub">Educacional · por Aryanna Gonzaga</div></div></div>
