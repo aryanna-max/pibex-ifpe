@@ -212,7 +212,7 @@ details.aba>.corpo{padding:2px 12px 12px;display:flex;flex-direction:column;gap:
         <label><input type="checkbox" id="l-eix" checked><i class="sw" style="background:#ff5a1f"></i> Estrada e tubo</label>
         <label><input type="checkbox" id="l-cer" checked><i class="sw" style="background:#c9c9c9"></i> Cerca</label>
         <label><input type="checkbox" id="l-gnss"><i class="sw" style="background:#111"></i> Pontos GNSS</label>
-        <label><input type="checkbox" id="l-rio" checked><i class="sw" style="background:#2f86e0"></i> Rio (pela ortofoto)</label>
+        <label><input type="checkbox" id="l-rio" checked><i class="sw" style="background:#2f86e0"></i> Rio</label>
         <label><input type="checkbox" id="l-key" checked><i class="sw" style="background:var(--water)"></i> Rio e bomba</label>
         <label><input type="checkbox" id="l-cam" checked><i class="sw" style="background:#ff2d8a"></i> Caminho e perfil</label>
         <label><input type="checkbox" id="l-fot" checked><i class="sw" style="background:#ffd23f"></i> Fotos de campo</label>
@@ -229,7 +229,7 @@ details.aba>.corpo{padding:2px 12px 12px;display:flex;flex-direction:column;gap:
     </div></details>
 
     <details class="aba"><summary>Sobre o levantamento</summary><div class="corpo foot">
-      Levantamento topográfico planialtimétrico com GNSS (149 pontos) e drone, outubro de 2026, executado pela AG Topografia. Coordenadas UTM SIRGAS 2000, fuso 25 S. Altitude ortométrica pelo modelo hgeoHNOR (IBGE-PPP da base: 103,12 m). Todo o relevo vem do levantamento: GNSS e drone. O traçado do rio foi desenhado sobre a ortofoto (aproximado); o sentido da correnteza mostrado, de leste para oeste, é estimado pelo relevo. Medidas só dentro da área levantada; no resto da ortofoto o relevo é estendido a partir desses pontos e não serve para medir.
+      Levantamento topográfico planialtimétrico com GNSS (149 pontos) e drone, outubro de 2026, executado pela AG Topografia. Coordenadas UTM SIRGAS 2000, fuso 25 S. Altitude ortométrica pelo modelo hgeoHNOR (IBGE-PPP da base: 103,12 m). Todo o relevo vem do levantamento: GNSS e drone. Medidas só dentro da área levantada; no resto da ortofoto o relevo é estendido a partir desses pontos e não serve para medir.
     </div></details>
   </aside>
   <footer class="aglab-bar">
@@ -343,7 +343,7 @@ function buildLayers(){
     const pos=[],uv=[],idx=[];const W2=1.6;for(let i=0;i<P.length;i++){const a=P[Math.max(0,i-1)],b=P[Math.min(P.length-1,i+1)];const dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1;const nx=-dy/l*W2,ny=dx/l*W2;const q=P[i];
       const u1=toW(q[0]+nx,q[1]+ny,q[2]+0.25),u2=toW(q[0]-nx,q[1]-ny,q[2]+0.25);pos.push(u1.x,u1.y,u1.z,u2.x,u2.y,u2.z);uv.push(q[3]/8,0,q[3]/8,1);if(i){const k2=i*2;idx.push(k2-2,k2-1,k2,k2,k2-1,k2+1);}}
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);
-    gr2.add(new THREE.Mesh(g,new THREE.MeshBasicMaterial({map:window._rioTex,transparent:true,opacity:0.88,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4})));}}
+    gr2.add(new THREE.Mesh(g,new THREE.MeshBasicMaterial({map:window._rioTex,transparent:true,opacity:0.55,depthWrite:false,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4})));}}
   const gf=grp('fot');
   if(!window._camTex){const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');x.fillStyle='rgba(20,28,24,.88)';x.beginPath();x.arc(64,64,60,0,7);x.fill();x.strokeStyle='#fff';x.lineWidth=5;x.stroke();
     x.fillStyle='#fff';x.beginPath();x.roundRect?x.roundRect(28,46,72,46,8):x.rect(28,46,72,46);x.fill();x.fillRect(50,36,28,14);x.fillStyle='rgba(20,28,24,1)';x.beginPath();x.arc(64,69,15,0,7);x.fill();x.fillStyle='#fff';x.beginPath();x.arc(64,69,9,0,7);x.fill();
