@@ -151,17 +151,21 @@ details.aba>.corpo{padding:2px 12px 12px;display:flex;flex-direction:column;gap:
     </section>
 
     <section id="p-medir" hidden>
-      <div class="lbl">Medida entre dois pontos</div>
+      <div class="lbl">Medida por alinhamentos</div>
       <dl class="read">
+        <dt>Alinhamentos</dt><dd id="d-n">0</dd>
+        <dt><b>Último trecho</b></dt><dd></dd>
         <dt>Distância horizontal</dt><dd id="d-h">--</dd>
         <dt>Distância inclinada</dt><dd id="d-i">--</dd>
         <dt>Desnível</dt><dd id="d-z">--</dd>
         <dt>Declividade</dt><dd id="d-s">--</dd>
         <dt>Azimute</dt><dd id="d-a">--</dd>
-        <dt>Ponto A</dt><dd id="d-pa">--</dd>
-        <dt>Ponto B</dt><dd id="d-pb">--</dd>
+        <dt><b>Total</b></dt><dd></dd>
+        <dt>Horizontal</dt><dd id="d-th">--</dd>
+        <dt>Inclinada</dt><dd id="d-ti">--</dd>
+        <dt>Desnível (fim menos início)</dt><dd id="d-tz">--</dd>
       </dl>
-      <div class="btns" style="margin-top:10px"><button class="btn" id="d-clr">Limpar</button></div>
+      <div class="btns" style="margin-top:10px"><button class="btn" id="d-und">Desfazer</button><button class="btn" id="d-clr">Limpar</button></div>
     </section>
 
     <section id="p-cam" hidden>
@@ -189,8 +193,9 @@ details.aba>.corpo{padding:2px 12px 12px;display:flex;flex-direction:column;gap:
 
     <details class="aba" open><summary>Planta e perfis (esquemáticos)</summary><div class="corpo">
     <section>
-      <div class="hint" style="margin:0 0 6px">Na ferramenta Ponto, clique numa linha para ver o perfil. Em Medir e Caminho, clique na planta para medir.</div>
+      <div class="hint" style="margin:0 0 6px">Clique numa linha para ver o perfil ou a seção. Roda do mouse aproxima, arrastar move. O que você mede ou traça no 3D aparece aqui.</div>
       <svg id="planta" viewBox="0 0 300 300" style="width:100%;height:auto;max-height:260px;display:block;border:1px solid var(--line);border-radius:6px;background:var(--bg)" role="img" aria-label="Planta esquemática com limites, eixos e seções"></svg>
+      <div class="btns" style="margin-top:6px"><button class="btn" id="pz-in" aria-label="Aproximar planta">+</button><button class="btn" id="pz-out" aria-label="Afastar planta">−</button><button class="btn" id="pz-all">Tudo</button></div>
       <label for="selPerf" class="hint" style="display:block;margin:8px 0 4px">Perfil ou seção (clique também na planta)</label>
       <select id="selPerf" style="width:100%;padding:6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:13px var(--sans)"></select>
       <canvas id="perf2" width="900" height="380" aria-label="Perfil esquemático" style="width:100%;height:auto;aspect-ratio:900/380;display:block;border:1px solid var(--line);border-radius:6px;background:var(--bg);margin-top:8px"></canvas>
@@ -353,7 +358,7 @@ document.getElementById('l-cam').addEventListener('change',camVis);
 const tagsEl=document.getElementById('tags'); let tags=[]; let tagsDirty=true;
 function setTags(){drawPlOver();tags=[];
   if(document.getElementById('l-key').checked) for(const k of D.lay.chave) tags.push({p:[k[1],k[2],k[3]],t:k[0]+' · '+fmt(k[3])+' m'});
-  if(mode==='medir'&&mp.length) mp.forEach((p,i)=>tags.push({p,t:(i?'B':'A')+' · '+fmt(p[2])+' m',c:'m'}));
+  if(mode==='medir'&&mp.length){tags.push({p:mp[0],t:'Início · '+fmt(mp[0][2])+' m',c:'m'});if(mp.length>1)tags.push({p:mp[mp.length-1],t:'Fim · '+fmt(mp[mp.length-1][2])+' m',c:'m'});}
   if(mode==='cam'&&cp.length){tags.push({p:cp[0],t:'Início · '+fmt(cp[0][2])+' m',c:'p'}); if(cp.length>1)tags.push({p:cp[cp.length-1],t:'Fim · '+fmt(cp[cp.length-1][2])+' m',c:'p'});}
   if(mode==='ponto'&&pk) tags.push({p:pk,t:fmt(pk[2])+' m'});
   tagsEl.innerHTML=tags.map(t=>`<div class="tag ${t.c||''}"></div>`).join('');
@@ -362,7 +367,7 @@ function placeTags(){const r=canvas.getBoundingClientRect();[...tagsEl.children]
 
 /* modos */
 let mode='ponto', pk=null, mp=[], cp=[], pathObj=null, measObj=null, mark=null;
-const modes={ponto:'Clique no terreno para ver a altitude ortométrica. Botão esquerdo gira, roda aproxima no cursor, roda apertada ou botão direito arrasta, duplo clique muda o centro do giro.',medir:'Clique em dois pontos do terreno. O terceiro clique começa uma nova medida.',cam:'Clique no terreno para pôr cada vértice. O caminho acompanha o relevo entre um clique e outro.'};
+const modes={ponto:'Clique no terreno para ver a altitude ortométrica. Botão esquerdo gira, roda aproxima no cursor, roda apertada ou botão direito arrasta, duplo clique muda o centro do giro.',medir:'Clique no terreno ponto a ponto. Cada clique soma um alinhamento, até você clicar em Limpar.',cam:'Clique no terreno para pôr cada vértice. O caminho acompanha o relevo entre um clique e outro.'};
 function camVis(){const on=document.getElementById('l-cam').checked;if(pathObj)pathObj.visible=on&&mode==='cam';if(groups.sel)groups.sel.visible=on;}
 function setMode(k){mode=k;for(const b of ['ponto','medir','cam'])document.getElementById('m-'+b).setAttribute('aria-pressed',b===k);document.getElementById('p-ponto').hidden=k!=='ponto';document.getElementById('p-medir').hidden=k!=='medir';document.getElementById('p-cam').hidden=k!=='cam';document.getElementById('hint').textContent=modes[k];if(measObj)measObj.visible=k==='medir';if(pathObj)pathObj.visible=k==='cam'&&document.getElementById('l-cam').checked;if(mark)mark.visible=k==='ponto';tagsDirty=true;if(k==='cam')drawProfile();drawPlOver();}
 document.getElementById('m-ponto').onclick=()=>setMode('ponto');document.getElementById('m-medir').onclick=()=>setMode('medir');document.getElementById('m-cam').onclick=()=>setMode('cam');
@@ -484,8 +489,12 @@ function planta(){
   const k=D.lay.chave;h+=`<circle cx="${ox+k[0][1]*s}" cy="${oy-k[0][2]*s}" r="3.5" fill="${water}"/><text x="${ox+k[0][1]*s-6}" y="${oy-k[0][2]*s-6}" font-size="9" fill="${ink}" text-anchor="end">rio</text>`;
   h+=`<circle cx="${ox+k[2][1]*s}" cy="${oy-k[2][2]*s}" r="3.5" fill="#e0453a"/>`;
   const bar=50*s;h+=`<line x1="12" y1="290" x2="${12+bar}" y2="290" stroke="${ink}" stroke-width="2"/><text x="12" y="284" font-size="9" fill="${ink}">50 m</text><text x="285" y="16" font-size="11" fill="${ink}" text-anchor="middle" font-weight="600">N</text><path d="M285 20 l-4 10 h8z" fill="${ink}"/>`;
-  sv.innerHTML=h+'<g id="plOver"></g>';sv.querySelectorAll('[data-i]').forEach(el=>el.addEventListener('click',ev=>{if(mode==='ponto'){ev.stopPropagation();selPerf(+el.dataset.i,true);}}));
-  if(!sv._clk){sv._clk=1;sv.style.cursor='crosshair';sv.addEventListener('click',ev=>{const pt=sv.createSVGPoint();pt.x=ev.clientX;pt.y=ev.clientY;const v=pt.matrixTransform(sv.getScreenCTM().inverse());const L=window._pl;const x=(v.x-L.ox)/L.s,y=(L.oy-v.y)/L.s;const h=hAt(x,y);if(h==null){fora();return;}onPick([x,y,h]);});}
+  sv.innerHTML=h+'<g id="plOver"></g>';sv.querySelectorAll('[data-i]').forEach(el=>el.addEventListener('click',ev=>{if(window._plDrag)return;selPerf(+el.dataset.i,true);}));
+  if(!sv._zm){sv._zm=1;sv.style.cursor='grab';const V=()=>sv.viewBox.baseVal;
+    sv.addEventListener('wheel',ev=>{ev.preventDefault();const pt=sv.createSVGPoint();pt.x=ev.clientX;pt.y=ev.clientY;const c=pt.matrixTransform(sv.getScreenCTM().inverse());const k=ev.deltaY>0?1.2:1/1.2;const v=V();const w=Math.min(600,Math.max(20,v.width*k));const f=w/v.width;sv.setAttribute('viewBox',[c.x-(c.x-v.x)*f,c.y-(c.y-v.y)*f,w,w].join(' '));},{passive:false});
+    let dr=null;sv.addEventListener('pointerdown',ev=>{dr={x:ev.clientX,y:ev.clientY,v:[V().x,V().y,V().width]};window._plDrag=false;});
+    addEventListener('pointermove',ev=>{if(!dr)return;const dx=ev.clientX-dr.x,dy=ev.clientY-dr.y;if(Math.hypot(dx,dy)>4)window._plDrag=true;if(!window._plDrag)return;const r=sv.getBoundingClientRect();const s=dr.v[2]/Math.min(r.width,r.height);sv.setAttribute('viewBox',[dr.v[0]-dx*s,dr.v[1]-dy*s,dr.v[2],dr.v[2]].join(' '));});
+    addEventListener('pointerup',()=>{dr=null;setTimeout(()=>window._plDrag=false,0);});}
   drawPlOver();
 }
 function fitCanvas(c){const r=c.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2),W=Math.max(200,r.width),H=Math.max(90,r.height);c.width=Math.round(W*d);c.height=Math.round(H*d);const x=c.getContext('2d');x.setTransform(d,0,0,d,0,0);x.clearRect(0,0,W,H);return [x,W,H];}
@@ -512,10 +521,12 @@ function flyToPerf(i){const P=D.perfis[i];const xy=P.xy;let cxp=0,cyp=0;xy.forEa
   if(anim)stopAnim();fly={t0:performance.now(),p0:cam.position.clone(),t1:ctl.target.clone(),p1:cp_,tt:tg};}
 function drawPlOver(){const g=document.getElementById('plOver');if(!g||!window._pl)return;const L=window._pl,X=p=>(L.ox+p[0]*L.s).toFixed(1),Y=p=>(L.oy-p[1]*L.s).toFixed(1);let h='';
   if(mode==='cam'&&cp.length){h+=`<polyline points="${cp.map(p=>X(p)+','+Y(p)).join(' ')}" fill="none" stroke="#ff2d8a" stroke-width="2.2"/>`;cp.forEach(p=>h+=`<circle cx="${X(p)}" cy="${Y(p)}" r="2.2" fill="#ff2d8a"/>`);}
-  if(mode==='medir'&&mp.length){if(mp.length>1)h+=`<line x1="${X(mp[0])}" y1="${Y(mp[0])}" x2="${X(mp[1])}" y2="${Y(mp[1])}" stroke="#7a3fb0" stroke-width="2"/>`;mp.forEach((p,i)=>h+=`<circle cx="${X(p)}" cy="${Y(p)}" r="3" fill="#7a3fb0"/><text x="${+X(p)+4}" y="${+Y(p)-4}" font-size="9" font-weight="700" fill="#7a3fb0">${i?'B':'A'}</text>`);
-    if(mp.length>1){const dh=Math.hypot(mp[1][0]-mp[0][0],mp[1][1]-mp[0][1]);h+=`<text x="${(+X(mp[0])+ +X(mp[1]))/2+4}" y="${(+Y(mp[0])+ +Y(mp[1]))/2-4}" font-size="9" font-weight="700" fill="#7a3fb0">${fmt(dh,1)} m</text>`;}}
+  if(mode==='medir'&&mp.length){if(mp.length>1)h+=`<polyline points="${mp.map(p=>X(p)+','+Y(p)).join(' ')}" fill="none" stroke="#7a3fb0" stroke-width="2"/>`;mp.forEach((p,i)=>h+=`<circle cx="${X(p)}" cy="${Y(p)}" r="2.4" fill="#7a3fb0"/>`);
+    for(let k=1;k<mp.length;k++){const a=mp[k-1],b=mp[k],dh=Math.hypot(b[0]-a[0],b[1]-a[1]);h+=`<text x="${(+X(a)+ +X(b))/2+3}" y="${(+Y(a)+ +Y(b))/2-3}" font-size="8" font-weight="700" fill="#7a3fb0" stroke="#fff" stroke-width="2" paint-order="stroke">${fmt(dh,1)} m</text>`;}}
   if(mode==='ponto'&&pk)h+=`<circle cx="${X(pk)}" cy="${Y(pk)}" r="2.6" fill="#111" stroke="#fff" stroke-width="1"/>`;
   g.innerHTML=h;}
+function plZoom(k){const sv=document.getElementById('planta'),v=sv.viewBox.baseVal;const cx_=v.x+v.width/2,cy_=v.y+v.height/2,w=Math.min(600,Math.max(20,v.width*k));sv.setAttribute('viewBox',[cx_-w/2,cy_-w/2,w,w].join(' '));}
+document.getElementById('pz-in').onclick=()=>plZoom(1/1.5);document.getElementById('pz-out').onclick=()=>plZoom(1.5);document.getElementById('pz-all').onclick=()=>document.getElementById('planta').setAttribute('viewBox','0 0 300 300');
 function selPerf(i,voar){selP=i;selEl.value=i;planta();drawPerf();buildLayers();camVis();if(voar)flyToPerf(i);}
 selEl.addEventListener('change',()=>selPerf(+selEl.value,true));
 document.getElementById('bPlay').onclick=()=>{if(anim)stopAnim();else startArrival();};
@@ -523,24 +534,29 @@ document.getElementById('c-go').onclick=()=>{if(anim)stopAnim();startPath();};
 canvas.addEventListener('pointerdown',()=>{if(anim)anim.user=true;});
 function onPick(p){
   if(mode==='ponto'){pk=p;document.getElementById('r-h').textContent=fmt(p[2])+' m';document.getElementById('r-e').textContent=E(p);document.getElementById('r-n').textContent=N(p);document.getElementById('r-rio').textContent=fmt(p[2]-rioH)+' m';drawMark();}
-  if(mode==='medir'){if(mp.length>=2)mp=[];mp.push(p);updMeasure();}
+  if(mode==='medir'){mp.push(p);updMeasure();}
   if(mode==='cam'){const l=cp[cp.length-1];if(l&&Math.hypot(l[0]-p[0],l[1]-p[1])<0.5)return;cp.push(p);updPath();}
   tagsDirty=true;drawPlOver();
 }
 function drawMark(){if(mark)scene.remove(mark);if(!pk)return;mark=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,8),new THREE.MeshBasicMaterial({color:0x111111}));mark.position.copy(toW(pk[0],pk[1],pk[2]));scene.add(mark);}
 function updMeasure(){
   if(measObj){scene.remove(measObj);measObj.traverse(o=>{if(o.geometry)o.geometry.dispose();});} measObj=new THREE.Group();scene.add(measObj);
-  const ids=['d-h','d-i','d-z','d-s','d-a','d-pa','d-pb'];
-  for(const p of mp){const s=new THREE.Mesh(new THREE.SphereGeometry(1,14,10),new THREE.MeshBasicMaterial({color:0xb98ae6}));s.position.copy(toW(p[0],p[1],p[2]));measObj.add(s);}
-  if(mp.length<2){ids.forEach(i=>document.getElementById(i).textContent='--');if(mp[0])document.getElementById('d-pa').textContent=fmt(mp[0][2])+' m';return;}
-  const [a,b]=mp; const g=new THREE.BufferGeometry().setFromPoints([toW(a[0],a[1],a[2]+OFF),toW(b[0],b[1],b[2]+OFF)]);
+  const ids=['d-n','d-h','d-i','d-z','d-s','d-a','d-th','d-ti','d-tz'];
+  for(const p of mp){const s=new THREE.Mesh(new THREE.SphereGeometry(0.35,12,8),new THREE.MeshBasicMaterial({color:0x7a3fb0}));s.position.copy(toW(p[0],p[1],p[2]+0.1));measObj.add(s);}
+  document.getElementById('d-n').textContent=mp.length?String(mp.length-1):'0';
+  if(mp.length<2){ids.slice(1).forEach(i=>document.getElementById(i).textContent='--');return;}
+  const g=new THREE.BufferGeometry().setFromPoints(mp.map(q=>toW(q[0],q[1],q[2]+OFF)));
   measObj.add(new THREE.Line(g,new THREE.LineBasicMaterial({color:0xd7b3ff,depthTest:false})));
-  const dh=Math.hypot(b[0]-a[0],b[1]-a[1]), dz=b[2]-a[2]; let az=Math.atan2(b[0]-a[0],b[1]-a[1])*180/Math.PI; if(az<0)az+=360;
+  let th=0,ti=0;for(let k=1;k<mp.length;k++){const a=mp[k-1],b=mp[k],h=Math.hypot(b[0]-a[0],b[1]-a[1]);th+=h;ti+=Math.hypot(h,b[2]-a[2]);}
+  const a=mp[mp.length-2],b=mp[mp.length-1];const dh=Math.hypot(b[0]-a[0],b[1]-a[1]),dz=b[2]-a[2];let az=Math.atan2(b[0]-a[0],b[1]-a[1])*180/Math.PI;if(az<0)az+=360;
   const dms=x=>{const d=Math.floor(x),mm=Math.floor((x-d)*60),s=Math.round(((x-d)*60-mm)*60);return d+'° '+String(mm).padStart(2,'0')+"' "+String(s).padStart(2,'0')+'"';};
+  const tz=mp[mp.length-1][2]-mp[0][2];
   document.getElementById('d-h').textContent=m(dh);document.getElementById('d-i').textContent=m(Math.hypot(dh,dz));
   document.getElementById('d-z').textContent=(dz>=0?'+':'')+m(dz);document.getElementById('d-s').textContent=dh>0?fmt(Math.abs(dz)/dh*100,1)+' %':'--';
-  document.getElementById('d-a').textContent=dms(az);document.getElementById('d-pa').textContent=fmt(a[2])+' m';document.getElementById('d-pb').textContent=fmt(b[2])+' m';
+  document.getElementById('d-a').textContent=dms(az);
+  document.getElementById('d-th').textContent=m(th);document.getElementById('d-ti').textContent=m(ti);document.getElementById('d-tz').textContent=(tz>=0?'+':'')+m(tz);
 }
+document.getElementById('d-und').onclick=()=>{mp.pop();updMeasure();tagsDirty=true;};
 document.getElementById('d-clr').onclick=()=>{mp=[];updMeasure();tagsDirty=true;};
 let prof=[];
 function updPath(){
