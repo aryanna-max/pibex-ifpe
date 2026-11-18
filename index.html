@@ -354,7 +354,7 @@ function buildLayers(){
   for(const k in groups){scene.remove(groups[k]);groups[k].traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material&&o.material!==window._keepMat)o.material.dispose&&o.material.dispose();});delete groups[k];}
   const L=D.lay;
   const gc=grp('cur'); window._cotTex=window._cotTex||{};
-  for(const c of L.curvas){const P=c.xy.map(p=>[p[0],p[1],c.z]);const cor=c.maj?0x7b1e2b:0xff8c1a;gc.add(lineFrom(P,cor));gc.add(band(P,c.maj?0.16:0.06,cor,c.maj?1:0.75,0.08));
+  for(const c of L.curvas){const P=c.xy.map(p=>[p[0],p[1],c.z]);const cor=c.maj?0x7b1e2b:0xff8c1a;gc.add(band(P,c.maj?0.22:0.1,cor,c.maj?1:0.85,0.03));
     if(c.maj){const txt=fmt(c.z,1).replace(',0','');let tx=window._cotTex[txt];if(!tx){const cv=document.createElement('canvas');cv.width=128;cv.height=52;const x=cv.getContext('2d');x.font='800 38px Asap,sans-serif';x.textAlign='center';x.textBaseline='middle';x.lineWidth=9;x.strokeStyle='rgba(255,255,255,.95)';x.strokeText(txt,64,27);x.fillStyle='#5c1420';x.fillText(txt,64,27);tx=new THREE.CanvasTexture(cv);window._cotTex[txt]=tx;}
       const mat=new THREE.SpriteMaterial({map:tx,sizeAttenuation:false,depthTest:true,transparent:true});let acc=0,next=20,put=0;
       for(let k=1;k<c.xy.length;k++){const a=c.xy[k-1],b=c.xy[k];acc+=Math.hypot(b[0]-a[0],b[1]-a[1]);if(acc>=next){const s=new THREE.Sprite(mat);s.scale.set(0.075,0.031,1);s.position.copy(toW(b[0],b[1],c.z+0.6));s.renderOrder=4;gc.add(s);next+=60;put++;}}
