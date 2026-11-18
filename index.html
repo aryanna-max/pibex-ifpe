@@ -665,7 +665,7 @@ function rebuild(){buildTerrain();buildCtx();buildLayers();drawMark();if(mp.leng
 function resize(){const r=canvas.parentElement.getBoundingClientRect();renderer.setSize(r.width,r.height,false);cam.aspect=r.width/r.height;cam.updateProjectionMatrix();}
 new ResizeObserver(resize).observe(canvas.parentElement);
 rebuild(); cam.position.set(-260,420,520); ctl.target.set(0,(90-ZB)*EX,0); ctl.update(); resize();
-cSel.value='0'; loadPronto(0); setMode('ponto'); selPerf(0);
+cSel.value='0'; loadPronto(0); setMode('cam'); selPerf(0);
 startArrival();{anim.f(0);anim=null;car.visible=true;setCap(null);document.getElementById('bPlay').textContent='Ver a chegada ao terreno';}
 document.getElementById('bInicio').addEventListener('pointerdown',e=>e.stopPropagation());document.getElementById('bInicio').onclick=(e)=>{e.stopPropagation();downAt=null;somPronto();const ini=document.getElementById('inicio');ini.hidden=true;ini.style.display='none';startArrival();};
 const nA=document.getElementById('nArrow');
