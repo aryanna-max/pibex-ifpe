@@ -95,6 +95,9 @@ details.aba>.corpo{padding:2px 12px 12px;display:flex;flex-direction:column;gap:
 .app.sem3d .pp{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:start;--plH:460px}
 .app.sem3d .side{max-width:1200px}
 .buz{position:absolute;right:max(10px,env(safe-area-inset-right,0px));bottom:52px;width:36px;height:36px;border:0;border-radius:50%;background:rgba(16,22,19,.78);color:#fff;display:grid;place-items:center;cursor:pointer}
+.inicio{position:absolute;inset:0;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;background:rgba(10,16,20,.45);z-index:6}
+.inicio button{border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);font:700 17px var(--sans);padding:16px 26px;cursor:pointer;box-shadow:0 0 0 4px rgba(255,255,255,.25)}
+.inicio a{color:#fff;font:600 13px var(--sans)}
 #err{position:absolute;inset:0;display:none;place-items:center;color:#fff;padding:24px;text-align:center}
 @media (max-width:760px){.app{grid-template-columns:1fr;grid-template-rows:56vh auto auto;height:auto}.view{height:56vh}.side{border-left:0;border-top:1px solid var(--line);overflow:visible}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -126,6 +129,7 @@ details.aba>.corpo{padding:2px 12px 12px;display:flex;flex-direction:column;gap:
     <div class="foto" id="foto" hidden><button class="btn" id="fotoX" aria-label="Fechar foto">Fechar</button><img id="fotoI" alt=""><div id="fotoT"></div></div>
     <div class="cap" id="cap" hidden><b id="capT"></b><span id="capS"></span></div>
     <button class="play" id="bPlay">Ver a chegada ao terreno</button>
+    <div class="inicio" id="inicio"><button id="bInicio">Começar a chegada ao terreno</button><a href="#" id="bPular">Ir direto ao modelo</a></div>
     <button class="buz" id="buz" aria-pressed="true" aria-label="Som ligado" title="Som ligado"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg></button>
     <div id="err">Este aparelho não conseguiu abrir o 3D (WebGL desligado).</div>
   </div>
@@ -411,6 +415,8 @@ const E=p=>fmt(p[0]+E0,3), N=p=>fmt(p[1]+N0,3);
 let toastT=null;
 let _ac=null,somOn=true;const SOM_ON='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>',SOM_OFF='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
 document.getElementById('buz').onclick=()=>{somOn=!somOn;const b=document.getElementById('buz');b.innerHTML=somOn?SOM_ON:SOM_OFF;b.setAttribute('aria-pressed',String(somOn));b.setAttribute('aria-label',somOn?'Som ligado':'Som desligado');b.title=somOn?'Som ligado':'Som desligado';};
+function somPronto(){try{_ac=_ac||new (window.AudioContext||window.webkitAudioContext)();if(_ac.state==='suspended')_ac.resume();}catch(e){}}
+['pointerdown','keydown','touchstart'].forEach(ev=>addEventListener(ev,somPronto,{passive:true}));
 function buzina(){if(!somOn)return;try{_ac=_ac||new (window.AudioContext||window.webkitAudioContext)();if(_ac.state==='suspended')_ac.resume();
   const t0=_ac.currentTime;[0,0.32].forEach(dt=>{const g=_ac.createGain();g.gain.setValueAtTime(0,t0+dt);g.gain.linearRampToValueAtTime(0.18,t0+dt+0.02);g.gain.setValueAtTime(0.18,t0+dt+0.2);g.gain.linearRampToValueAtTime(0,t0+dt+0.24);g.connect(_ac.destination);
   [415,523].forEach(f=>{const o=_ac.createOscillator();o.type='square';o.frequency.value=f;o.connect(g);o.start(t0+dt);o.stop(t0+dt+0.26);});});}catch(e){}}
@@ -485,10 +491,10 @@ function startArrival(){
   const HUD=[[0,'Moreno, Pernambuco','Comunidade Padre Tiago. Chegada pela parte alta do terreno.'],[5,'A área de plantio',fmt(D.lay.plantio.area,0)+' m² no alto, perto de '+fmt(hiH)+' m de altitude ortométrica.'],[T0+4,'Descendo pela estrada de acesso',fmt(Lc,0)+' m de carro até o telheiro.'],[T1,'O telheiro','Daqui não dá para descer de carro. O resto é a pé.'],[T2,'A pé pelo tubo e pelo barranco',fmt(Lw,0)+' m de descida até a bomba.'],[T3,'O rio e a bomba','Linha d\'água a '+fmt(rioH)+' m. Daqui a água precisa subir '+fmt(hiH-rioH)+' m até o ponto mais alto.']];
   person.visible=false;
   let bz1=false,bz2=false;
-  anim={t0:performance.now(),f:t=>{if(!bz1&&t>=T0-1.5){bz1=true;buzina();}if(!bz2&&t>=T1){bz2=true;buzina();}
+  anim={t0:performance.now(),f:t=>{if(!bz2&&t>=T1){bz2=true;buzina();}
     let h=HUD[0];HUD.forEach(x=>{if(t>=x[0])h=x;});setCap(h[1],h[2]);
     if(t<T0){const a=sm(0,T0,t);if(!anim.user)cam.position.set(lerp(S.x-650,S.x-60,a),lerp(800,S.y+45,a),lerp(S.z+650,S.z+70,a));ctl.target.copy(C.clone().lerp(S,a));car.visible=t>T0-2;if(car.visible)chaseCam(Rc,0,26,12,0.03);person.visible=false;}
-    else if(t<T1){car.visible=true;chaseCam(Rc,Math.min(Lc,(t-T0)*VC),26,12,0.07);}
+    else if(t<T1){car.visible=true;const sc=Math.min(Lc,(t-T0)*VC);chaseCam(Rc,sc,26,12,0.07);if(!bz1&&along(Rc,sc)[0][2]>=102){bz1=true;buzina();}}
     else if(t<T3){car.visible=true;placeAlong(car,Rc,Lc);person.visible=true;const s=t<T2?0:Math.min(Lw,(t-T2)*VW);const [p,ux,uy]=placeAlong(person,Rw,s);person.position.y+=Math.abs(Math.sin(t*7))*0.04;
       const pw=person.position.clone();if(anim.user){anim.focus=pw;}else{const want=toW(p[0]-ux*28,p[1]-uy*28,p[2]);want.y=pw.y+16;cam.position.lerp(want,K(0.04));ctl.target.lerp(pw,K(0.08));}}
     else if(!anim.user){const pw=person.position.clone();if(t<T3+6){const a=(t-T3)/6;const ang=a*1.2;cam.position.lerp(new THREE.Vector3(pw.x+16*Math.cos(ang),pw.y+7,pw.z+16*Math.sin(ang)),K(0.05));ctl.target.lerp(pw,K(0.1));}else{const a=(t-T3-6)/10;const ang=1.2+a*Math.PI*0.7;const r=lerp(30,240,a);cam.position.lerp(new THREE.Vector3(B.x+r*Math.cos(ang),B.y+lerp(15,160,a),B.z+r*Math.sin(ang)),K(0.04));ctl.target.lerp(B.clone().lerp(C,a*0.6),K(0.04));}}
@@ -651,7 +657,9 @@ function rebuild(){buildTerrain();buildCtx();buildLayers();drawMark();if(mp.leng
 function resize(){const r=canvas.parentElement.getBoundingClientRect();renderer.setSize(r.width,r.height,false);cam.aspect=r.width/r.height;cam.updateProjectionMatrix();}
 new ResizeObserver(resize).observe(canvas.parentElement);
 rebuild(); cam.position.set(-260,420,520); ctl.target.set(0,(90-ZB)*EX,0); ctl.update(); resize();
-cSel.value='0'; loadPronto(0); setMode('ponto'); selPerf(0); startArrival();
+cSel.value='0'; loadPronto(0); setMode('ponto'); selPerf(0);
+document.getElementById('bInicio').onclick=()=>{somPronto();document.getElementById('inicio').hidden=true;startArrival();};
+document.getElementById('bPular').onclick=ev=>{ev.preventDefault();somPronto();document.getElementById('inicio').hidden=true;};
 const nA=document.getElementById('nArrow');
 (function loop(){requestAnimationFrame(loop);if(window._rioTex)window._rioTex.offset.x+=0.004;if(fly){const a=sm(0,1.6,(performance.now()-fly.t0)/1000);cam.position.lerpVectors(fly.p0,fly.p1,a);ctl.target.lerpVectors(fly.t1,fly.tt,a);if(a>=1)fly=null;}if(anim){const now=performance.now();window._dt=Math.min(0.5,(now-(anim.last||now))/1000);anim.last=now;anim.focus=null;anim.f((now-anim.t0)/1000);if(anim&&anim.user){if(anim.focus){const dlt=anim.focus.clone().sub(ctl.target);cam.position.add(dlt);ctl.target.add(dlt);}ctl.update();}else if(anim)cam.lookAt(ctl.target);}else ctl.update();renderer.render(scene,cam);if(tagsDirty)setTags();placeTags();const az=Math.atan2(cam.position.x-ctl.target.x,cam.position.z-ctl.target.z);nA.style.transform='rotate('+(az*180/Math.PI)+'deg)';})();
 </script>
