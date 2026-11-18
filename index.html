@@ -129,7 +129,6 @@ details.aba>.corpo{padding:2px 12px 12px;display:flex;flex-direction:column;gap:
     <div class="foto" id="foto" hidden><button class="btn" id="fotoX" aria-label="Fechar foto">Fechar</button><img id="fotoI" alt=""><div id="fotoT"></div></div>
     <div class="cap" id="cap" hidden><b id="capT"></b><span id="capS"></span></div>
     <button class="play" id="bPlay">Ver a chegada ao terreno</button>
-    <div class="inicio" id="inicio"><button id="bInicio">Começar a chegada ao terreno</button><a href="#" id="bPular">Ir direto ao modelo</a></div>
     <button class="buz" id="buz" aria-pressed="true" aria-label="Som ligado" title="Som ligado"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg></button>
     <div id="err">Este aparelho não conseguiu abrir o 3D (WebGL desligado).</div>
   </div>
@@ -657,9 +656,7 @@ function rebuild(){buildTerrain();buildCtx();buildLayers();drawMark();if(mp.leng
 function resize(){const r=canvas.parentElement.getBoundingClientRect();renderer.setSize(r.width,r.height,false);cam.aspect=r.width/r.height;cam.updateProjectionMatrix();}
 new ResizeObserver(resize).observe(canvas.parentElement);
 rebuild(); cam.position.set(-260,420,520); ctl.target.set(0,(90-ZB)*EX,0); ctl.update(); resize();
-cSel.value='0'; loadPronto(0); setMode('ponto'); selPerf(0);
-document.getElementById('bInicio').onclick=()=>{somPronto();document.getElementById('inicio').hidden=true;startArrival();};
-document.getElementById('bPular').onclick=ev=>{ev.preventDefault();somPronto();document.getElementById('inicio').hidden=true;};
+cSel.value='0'; loadPronto(0); setMode('ponto'); selPerf(0); startArrival();
 const nA=document.getElementById('nArrow');
 (function loop(){requestAnimationFrame(loop);if(window._rioTex)window._rioTex.offset.x+=0.004;if(fly){const a=sm(0,1.6,(performance.now()-fly.t0)/1000);cam.position.lerpVectors(fly.p0,fly.p1,a);ctl.target.lerpVectors(fly.t1,fly.tt,a);if(a>=1)fly=null;}if(anim){const now=performance.now();window._dt=Math.min(0.5,(now-(anim.last||now))/1000);anim.last=now;anim.focus=null;anim.f((now-anim.t0)/1000);if(anim&&anim.user){if(anim.focus){const dlt=anim.focus.clone().sub(ctl.target);cam.position.add(dlt);ctl.target.add(dlt);}ctl.update();}else if(anim)cam.lookAt(ctl.target);}else ctl.update();renderer.render(scene,cam);if(tagsDirty)setTags();placeTags();const az=Math.atan2(cam.position.x-ctl.target.x,cam.position.z-ctl.target.z);nA.style.transform='rotate('+(az*180/Math.PI)+'deg)';})();
 </script>
