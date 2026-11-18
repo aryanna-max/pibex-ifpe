@@ -20,7 +20,7 @@
 :root[data-theme="dark"]{--bg:#10191f;--panel:#16232b;--ink:#e6eef0;--muted:#9fb0b6;--line:#26363f;--accent:#4b9cc6;--accent-ink:#0b1418;--teal:#2bb3a5;--verde:#a8cf45;--path:#f08a5d;--measure:#b98ae6;--water:#4b9cc6;--plant:#a8cf45;color-scheme:dark}
 html,body{height:100%}
 body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;margin:0}
-.app{display:grid;grid-template-columns:minmax(0,1fr) 340px;grid-template-rows:minmax(0,1fr) auto;height:100%;}
+.app{display:grid;grid-template-columns:minmax(0,1fr) clamp(340px,30vw,440px);grid-template-rows:minmax(0,1fr) auto;height:100%;}
 .aglab-bar{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;background:#1a1815;color:rgba(244,241,234,.75);padding-block:9px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .aglab-card{display:inline-flex;align-items:center;gap:11px}
 .aglab-card .mark{width:26px;height:26px;border-radius:5px;background:linear-gradient(135deg,#5dd4e8,#b8f255);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:10px;color:#1a1815}
@@ -71,6 +71,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .logo-cla{display:none}:root:not([data-theme="light"]) .logo-esc{display:block}}
 :root[data-theme="dark"] .logo-cla{display:none}:root[data-theme="dark"] .logo-esc{display:block}
 .foot{border-top:3px solid var(--teal)!important}
+.ajuda-btn{position:absolute;right:calc(max(10px,env(safe-area-inset-right,0px)) + 48px);top:12px;border:0;border-radius:6px;background:rgba(16,22,19,.82);color:#fff;font:600 12.5px var(--sans);padding:8px 12px;cursor:pointer}
+.ajuda{position:absolute;right:max(10px,env(safe-area-inset-right,0px));top:56px;width:min(420px,calc(100% - 20px));max-height:calc(100% - 120px);overflow:auto;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-top:4px solid var(--teal);border-radius:8px;padding:12px 16px;z-index:4;font-size:13px;line-height:1.5}
+.ajuda-top{display:flex;justify-content:space-between;align-items:center;font-size:15px;color:var(--accent)}.ajuda ol{padding-left:18px;margin:8px 0;display:flex;flex-direction:column;gap:6px}.ajuda b{color:var(--accent)}.ajuda-obs{font-size:12px;color:var(--muted);margin:6px 0 0}
 #err{position:absolute;inset:0;display:none;place-items:center;color:#fff;padding:24px;text-align:center}
 @media (max-width:760px){.app{grid-template-columns:1fr;grid-template-rows:56vh auto auto;height:auto}.view{height:56vh}.side{border-left:0;border-top:1px solid var(--line);overflow:visible}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -84,6 +87,21 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     <canvas id="c" aria-label="Modelo 3D do terreno"></canvas>
     <div class="tags" id="tags"></div>
     <div class="compass" title="Norte"><span id="nArrow">N</span></div>
+    <button class="ajuda-btn" id="bAjuda" aria-expanded="false">Como usar</button>
+    <div class="ajuda" id="ajuda" hidden>
+      <div class="ajuda-top"><b>Como usar</b><button class="btn" id="ajudaX">Fechar</button></div>
+      <ol>
+        <li><b>Mexer na vista.</b> Botão esquerdo gira. Roda do mouse aproxima onde está o cursor. Roda apertada ou botão direito arrasta. Duplo clique muda o centro do giro. No celular: um dedo gira, dois dedos aproximam e arrastam.</li>
+        <li><b>Ponto.</b> Clique no terreno e veja a altitude ortométrica, as coordenadas E e N e quanto o ponto está acima do rio.</li>
+        <li><b>Medir.</b> Clique em dois pontos: distância horizontal, inclinada, desnível, declividade e azimute.</li>
+        <li><b>Caminho.</b> Escolha um caminho pronto (rio até o ponto mais alto, estrada, tubo, plantio) ou desenhe o seu, clicando ponto a ponto. Aparecem o comprimento, o desnível e o perfil. "Percorrer o caminho" anda por ele: de caminhonete na estrada, a pé no tubo.</li>
+        <li><b>Planta e perfis.</b> Escolha um perfil ou seção na lista ou clique na planta. Ele aparece tracejado no 3D e a vista vai até ele.</li>
+        <li><b>Camadas.</b> Ligue e desligue superfície, ortofoto, curvas, plantio, estrada, cerca, pontos GPS, fotos e caminho.</li>
+        <li><b>Fotos.</b> Clique no ícone de câmera para ver a foto daquele lugar.</li>
+        <li><b>Chegada.</b> "Ver a chegada ao terreno" repete o passeio. Durante ele, a vista pode ser mexida.</li>
+      </ol>
+      <p class="ajuda-obs">Medidas valem só na área levantada (GPS e drone). Fora dela, o relevo é estendido a partir dos pontos e não serve para medir.</p>
+    </div>
     <div class="foto" id="foto" hidden><button class="btn" id="fotoX" aria-label="Fechar foto">Fechar</button><img id="fotoI" alt=""><div id="fotoT"></div></div>
     <div class="cap" id="cap" hidden><b id="capT"></b><span id="capS"></span></div>
     <button class="play" id="bPlay">Ver a chegada ao terreno</button>
@@ -338,6 +356,8 @@ canvas.addEventListener('pointerdown',e=>{downAt=[e.clientX,e.clientY];});
 canvas.addEventListener('pointerup',e=>{if(!downAt)return;const d=Math.hypot(e.clientX-downAt[0],e.clientY-downAt[1]);downAt=null;if(d>6)return;if(groups.fot&&groups.fot.visible){const r=canvas.getBoundingClientRect();ray.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),cam);const hf=ray.intersectObjects(groups.fot.children,true).find(x=>x.object.userData.foto!=null);if(hf){showFoto(hf.object.userData.foto);return;}}const p=pick(e);if(!p)return;onPick(p);});
 const E=p=>fmt(p[0]+E0,3), N=p=>fmt(p[1]+N0,3);
 let toastT=null;
+document.getElementById('bAjuda').onclick=()=>{const a=document.getElementById('ajuda');a.hidden=!a.hidden;document.getElementById('bAjuda').setAttribute('aria-expanded',String(!a.hidden));};
+document.getElementById('ajudaX').onclick=()=>{document.getElementById('ajuda').hidden=true;document.getElementById('bAjuda').setAttribute('aria-expanded','false');};
 function showFoto(i){const f=D.fotos[i];document.getElementById('fotoI').src=f.img;document.getElementById('fotoI').alt=f.nome;document.getElementById('fotoT').textContent=f.nome+' · visita de 20/10/2026';document.getElementById('foto').hidden=false;}
 document.getElementById('fotoX').onclick=()=>document.getElementById('foto').hidden=true;
 function fora(){let t=document.querySelector('.toast');if(!t){t=document.createElement('div');t.className='toast';canvas.parentElement.appendChild(t);}t.textContent='Fora da área levantada: aqui não se mede. O relevo aqui é estendido dos pontos de GPS e drone.';t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,3200);}
@@ -479,7 +499,7 @@ function onPick(p){
   if(mode==='cam'){const l=cp[cp.length-1];if(l&&Math.hypot(l[0]-p[0],l[1]-p[1])<0.5)return;cp.push(p);updPath();}
   tagsDirty=true;
 }
-function drawMark(){if(mark)scene.remove(mark);if(!pk)return;mark=new THREE.Mesh(new THREE.SphereGeometry(1,14,10),new THREE.MeshBasicMaterial({color:0xffffff}));mark.position.copy(toW(pk[0],pk[1],pk[2]));scene.add(mark);}
+function drawMark(){if(mark)scene.remove(mark);if(!pk)return;mark=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,8),new THREE.MeshBasicMaterial({color:0x111111}));mark.position.copy(toW(pk[0],pk[1],pk[2]));scene.add(mark);}
 function updMeasure(){
   if(measObj){scene.remove(measObj);measObj.traverse(o=>{if(o.geometry)o.geometry.dispose();});} measObj=new THREE.Group();scene.add(measObj);
   const ids=['d-h','d-i','d-z','d-s','d-a','d-pa','d-pb'];
