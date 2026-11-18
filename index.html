@@ -101,6 +101,7 @@ details.aba>.corpo{padding:2px 12px 12px;display:flex;flex-direction:column;gap:
 .inicio{position:absolute;inset:0;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;text-align:center;padding:20px;background:linear-gradient(180deg,rgba(10,18,24,.25),rgba(10,18,24,.7));backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px);z-index:6;color:#fff}
 .inicio-t{font:800 clamp(24px,3.4vw,40px)/1.15 var(--sans);text-wrap:balance;max-width:16ch;text-shadow:0 2px 12px rgba(0,0,0,.6)}.inicio-k{font:700 12px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:#b8f255}.inicio-s{font:500 15px/1.5 var(--sans);color:#e6eef0;max-width:38ch;margin-bottom:12px;text-shadow:0 1px 8px rgba(0,0,0,.7)}
 .inicio button{border:0;border-radius:10px;background:#195d83;color:#fff;font:700 17px var(--sans);padding:16px 28px;cursor:pointer;box-shadow:0 0 0 4px rgba(144,183,40,.45)}.inicio button:hover{background:#009083}
+[hidden]{display:none!important}
 #err{position:absolute;inset:0;display:none;place-items:center;color:#fff;padding:24px;text-align:center}
 @media (max-width:760px){.app{grid-template-columns:1fr;grid-template-rows:56vh auto auto;height:auto}.view{height:56vh}.side{border-left:0;border-top:1px solid var(--line);overflow:visible}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -666,7 +667,7 @@ new ResizeObserver(resize).observe(canvas.parentElement);
 rebuild(); cam.position.set(-260,420,520); ctl.target.set(0,(90-ZB)*EX,0); ctl.update(); resize();
 cSel.value='0'; loadPronto(0); setMode('ponto'); selPerf(0);
 startArrival();{anim.f(0);anim=null;car.visible=true;setCap(null);document.getElementById('bPlay').textContent='Ver a chegada ao terreno';}
-document.getElementById('bInicio').onclick=()=>{somPronto();document.getElementById('inicio').hidden=true;startArrival();};
+document.getElementById('bInicio').onclick=()=>{somPronto();const ini=document.getElementById('inicio');ini.hidden=true;ini.style.display='none';startArrival();};
 const nA=document.getElementById('nArrow');
 (function loop(){requestAnimationFrame(loop);if(window._rioTex)window._rioTex.offset.x+=0.004;if(fly){const a=sm(0,1.6,(performance.now()-fly.t0)/1000);cam.position.lerpVectors(fly.p0,fly.p1,a);ctl.target.lerpVectors(fly.t1,fly.tt,a);if(a>=1)fly=null;}if(anim){const now=performance.now();window._dt=Math.min(0.5,(now-(anim.last||now))/1000);anim.last=now;anim.focus=null;anim.f((now-anim.t0)/1000);if(anim&&anim.user){if(anim.focus){const dlt=anim.focus.clone().sub(ctl.target);cam.position.add(dlt);ctl.target.add(dlt);}ctl.update();}else if(anim)cam.lookAt(ctl.target);}else ctl.update();renderer.render(scene,cam);if(tagsDirty)setTags();placeTags();const az=Math.atan2(cam.position.x-ctl.target.x,cam.position.z-ctl.target.z);nA.style.transform='rotate('+(az*180/Math.PI)+'deg)';})();
 </script>
